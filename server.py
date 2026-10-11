@@ -53,7 +53,7 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_tdx_status()
         if self.path.split('?', 1)[0] == '/config.js':
             config = {
-                'liffId': os.getenv('LIFF_ID', ''),
+                'liffId': os.getenv('LIFF_ID', '2011973642-trV30fL4').strip(),
                 'googleMapsApiKey': os.getenv('GOOGLE_MAPS_API_KEY', ''),
                 'googleMapsMapId': os.getenv('GOOGLE_MAPS_MAP_ID', ''),
             }

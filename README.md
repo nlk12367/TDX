@@ -8,7 +8,7 @@
 
 ```powershell
 $env:PORT = "8080"
-$env:LIFF_ID = "你的 LIFF ID"
+$env:LIFF_ID = "2011973642-trV30fL4"
 $env:GOOGLE_MAPS_API_KEY = "你的 Google Maps JavaScript API key"
 $env:TDX_CLIENT_ID = "你的 TDX Client ID"
 $env:TDX_CLIENT_SECRET = "你的 TDX Client Secret"
@@ -21,7 +21,7 @@ python server.py
 
 1. 建立 GitHub repository，將這個資料夾的檔案放在 repository 根目錄。
 2. 在 Zeabur 建立 Python/Docker 服務並連接該 repository；專案內的 `Dockerfile` 會啟動 `server.py`。
-3. 在 Zeabur Variables 設定 `LIFF_ID`、`GOOGLE_MAPS_API_KEY`、`TDX_CLIENT_ID`、`TDX_CLIENT_SECRET`；`GOOGLE_MAPS_MAP_ID` 可選填。不要把金鑰寫進程式碼或推到 GitHub。
+3. LIFF ID 已內建為 `2011973642-trV30fL4`，也可在 Zeabur Variables 用 `LIFF_ID` 覆寫。另設定 `GOOGLE_MAPS_API_KEY`、`TDX_CLIENT_ID`、`TDX_CLIENT_SECRET`；`GOOGLE_MAPS_MAP_ID` 可選填。不要把 Google Maps、TDX 機密金鑰寫進程式碼或推到 GitHub。
 4. 部署完成後，複製 Zeabur HTTPS 網址。
 5. LINE Developers 的 LIFF Endpoint URL 設為這個網址。若沿用另一個已綁定舊網域的 LIFF，請將 endpoint 改到新服務，或在 LINE 建立對應新網域的 LIFF app。Rich Menu 連到該 LIFF URL。
 
