@@ -83,18 +83,18 @@
       </section>
 
       <section id="nearbyPanel" class="mode-panel" role="tabpanel" aria-labelledby="nearbyTab" hidden>
-        <p class="panel-copy">定位後預計比對附近道路交通資料，評估目前路況。定位只會在你按下按鈕後請求。</p>
-        <button class="secondary" id="locateButton" type="button"><span aria-hidden="true">◎</span> 使用目前位置</button>
+        <p class="panel-copy">先取得目前位置並確認 TDX 憑證連線。此階段尚未查詢附近道路車流。</p>
+        <button class="secondary" id="locateButton" type="button"><span aria-hidden="true">◎</span> 取得位置・檢查 TDX</button>
         <div id="locationStatus" class="status-badge is-pending" role="status" aria-live="polite">
           <span class="status-icon" aria-hidden="true">i</span>
-          <span class="status-copy"><strong id="locationMessage">TDX 路況尚未連線</strong><small id="locationDetail">尚未取得或傳送定位；附近車流資料待設定。</small></span>
+          <span class="status-copy"><strong id="locationMessage">尚未驗證 TDX 憑證</strong><small id="locationDetail">按下定位後，會一併檢查伺服器端認證。</small></span>
         </div>
         <div class="traffic-state">
           <div class="traffic-light" aria-hidden="true"><i></i><i></i><i></i></div>
-          <div><strong class="traffic-heading"><i class="traffic-dot" aria-hidden="true"></i><span id="trafficLabel">路況資料待連線</span></strong><p id="trafficDetail">接上 TDX 後，才會顯示附近道路的實際交通資料。</p></div>
+          <div><strong class="traffic-heading"><i class="traffic-dot" aria-hidden="true"></i><span id="trafficLabel">附近車流尚未查詢</span></strong><p id="trafficDetail">憑證驗證只確認伺服器可登入 TDX，不代表已取得附近道路資料。</p></div>
         </div>
         <div class="base-range-note"><span>目前可先參考基準續航</span><strong id="nearbyRange">輸入電量後顯示</strong></div>
-        <p class="fineprint privacy-note">交通部資料連線尚未設定；此版本不會把定位傳出或保存。路況與續航換算模型通過校準後，才會顯示交通修正結果。</p>
+        <p class="fineprint privacy-note">此階段定位只在瀏覽器取得，不傳送或保存座標。TDX 憑證由伺服器驗證；附近車流查詢與交通續航模型尚待接入和校準。</p>
       </section>
     </section>
 

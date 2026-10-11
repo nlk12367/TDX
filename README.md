@@ -1,6 +1,6 @@
 # 充電與續航規劃
 
-獨立的手機優先 LIFF 網頁：手動輸入目前電量，計算基準續航；可用 Google Maps Routes 規劃起點至目的地。附近位置／車流模式目前保留介面，TDX 尚未串接，也沒有使用未驗證的交通耗電係數。
+獨立的手機優先 LIFF 網頁：手動輸入目前電量，計算基準續航；可用 Google Maps Routes 規劃起點至目的地。附近位置模式可驗證伺服器端 TDX 憑證，但附近道路車流資料尚未查詢，也不會套用未驗證的交通耗電係數。
 
 ## 本機啟動
 
@@ -10,6 +10,8 @@
 $env:PORT = "8080"
 $env:LIFF_ID = "你的 LIFF ID"
 $env:GOOGLE_MAPS_API_KEY = "你的 Google Maps JavaScript API key"
+$env:TDX_CLIENT_ID = "你的 TDX Client ID"
+$env:TDX_CLIENT_SECRET = "你的 TDX Client Secret"
 python server.py
 ```
 
@@ -19,11 +21,11 @@ python server.py
 
 1. 建立 GitHub repository，將這個資料夾的檔案放在 repository 根目錄。
 2. 在 Zeabur 建立 Python/Docker 服務並連接該 repository；專案內的 `Dockerfile` 會啟動 `server.py`。
-3. 在 Zeabur Variables 設定 `LIFF_ID`、`GOOGLE_MAPS_API_KEY`；`GOOGLE_MAPS_MAP_ID` 可選填。不要把金鑰寫進程式碼或推到 GitHub。
+3. 在 Zeabur Variables 設定 `LIFF_ID`、`GOOGLE_MAPS_API_KEY`、`TDX_CLIENT_ID`、`TDX_CLIENT_SECRET`；`GOOGLE_MAPS_MAP_ID` 可選填。不要把金鑰寫進程式碼或推到 GitHub。
 4. 部署完成後，複製 Zeabur HTTPS 網址。
 5. LINE Developers 的 LIFF Endpoint URL 設為這個網址。若沿用另一個已綁定舊網域的 LIFF，請將 endpoint 改到新服務，或在 LINE 建立對應新網域的 LIFF app。Rich Menu 連到該 LIFF URL。
 
-TDX 目前尚未接通，所以附近路況不會顯示即時車流。接入前需要 TDX 憑證，以及經資料驗證的車流到能耗換算模型；不要把 TDX Client Secret 放在此前端服務或 repository，應由後端環境變數管理。
+伺服器會用 TDX 的 OAuth Client Credentials 流程驗證憑證，並將 Access Token 暫存在記憶體至到期；狀態端點只回傳驗證結果，不回傳 Client Secret 或 Token。附近路況資料查詢仍未接入，車流轉能耗模型亦待資料驗證；不要把 TDX Client Secret 放在前端或 repository，只由後端環境變數管理。
 
 ## 續航公式
 

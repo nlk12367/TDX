@@ -188,10 +188,20 @@
     }
     setLocationStatus('pending', '等待位置授權', '請在瀏覽器提示中允許存取目前位置。');
     navigator.geolocation.getCurrentPosition(
-      () => {
-        setLocationStatus('pending', '位置已取得・車流待連線', '定位留在此頁；TDX 服務尚未設定，暫不顯示路況修正。');
-        $('trafficLabel').textContent = '已定位・路況待連線';
-        $('trafficDetail').textContent = '接入 TDX 並完成續航模型校準後，才會顯示附近路段資料與路況續航估算。';
+      async () => {
+        setLocationStatus('pending', '正在驗證 TDX 憑證', '目前位置留在瀏覽器；只向本服務檢查伺服器端認證。');
+        try {
+          const response = await fetch('/api/tdx/status', { cache: 'no-store' });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok || !result.authenticated) throw new Error(result.message || '無法取得 TDX 驗證狀態，請確認服務已部署。');
+          setLocationStatus('pending', 'TDX 憑證驗證成功', '伺服器已取得存取權杖；附近道路資料查詢尚未接入。');
+          $('trafficLabel').textContent = 'TDX 認證成功・車流待查詢';
+          $('trafficDetail').textContent = '憑證有效，但本頁目前尚未查詢附近偵測器或路段資料。';
+        } catch (error) {
+          setLocationStatus('warning', 'TDX 憑證尚未驗證', error instanceof Error ? error.message : '請確認 Zeabur Variables 與服務部署狀態。');
+          $('trafficLabel').textContent = '附近車流尚未查詢';
+          $('trafficDetail').textContent = '檢查 Zeabur 的 TDX_CLIENT_ID、TDX_CLIENT_SECRET 後重新部署，再重試。';
+        }
       },
       (error) => {
         const denied = error.code === error.PERMISSION_DENIED;
