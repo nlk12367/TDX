@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0a0a">
+  <meta name="description" content="查看目前電量的基準續航，規劃目的地路線或查詢附近交通狀況。">
+  <title>充電與續航規劃｜油轉電顧問</title>
+  <link rel="stylesheet" href="./style.css">
+  <script src="/config.js"></script>
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="回到油轉電顧問首頁"><span class="brand-mark">⚡</span> 油轉電顧問</a>
+      <span class="local-tag"><span aria-hidden="true">●</span> 本機試算</span>
+    </header>
+
+    <section class="intro" aria-labelledby="page-title">
+      <p class="kicker">CHARGE PLANNER <span>／</span> 續航與路況</p>
+      <h1 id="page-title">現在的電量，<br><em>還能跑多遠？</em></h1>
+      <p class="intro-copy">輸入儀表電量，先看基準續航；再選路線或附近路況。</p>
+    </section>
+
+    <section class="energy-panel" aria-labelledby="energy-heading">
+      <div class="energy-head">
+        <div>
+          <p class="eyebrow">目前車輛電量</p>
+          <h2 id="energy-heading">手動輸入儀表電量</h2>
+        </div>
+        <span class="battery-icon" aria-hidden="true"><span id="batteryFill"></span></span>
+      </div>
+      <div class="soc-row">
+        <input id="socSlider" type="range" min="0" max="100" step="1" value="0" aria-label="目前電量百分比">
+        <label class="soc-number"><span class="sr-only">目前電量百分比</span><input id="socInput" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="--"><span>%</span></label>
+      </div>
+      <div class="range-result" aria-live="polite">
+        <div><span class="eyebrow">基準可行駛距離</span><strong id="rangeValue">輸入電量</strong></div>
+        <span class="range-unit">公里</span>
+      </div>
+      <details class="assumptions">
+        <summary>調整車輛估算參數</summary>
+        <div class="parameter-grid">
+          <label for="capacity">電池名目容量 <span>kWh</span><input id="capacity" type="number" min="1" max="300" step="0.1" value="74.7" inputmode="decimal"></label>
+          <label for="efficiency">參考效率 <span>km／度</span><input id="efficiency" type="number" min="0.1" max="20" step="0.1" value="6.7" inputmode="decimal"></label>
+        </div>
+        <p class="fineprint">初始參考值：74.7 kWh、6.7 km／度，皆可修改。實際續航受電池可用容量、車速、氣溫、坡度、空調與駕駛方式影響；這是估算值，不是車輛儀表讀值。</p>
+      </details>
+      <p class="formula">估算公式：名目電池容量 × 電量比例 × 參考效率</p>
+    </section>
+
+    <section class="planner" aria-labelledby="planner-heading">
+      <div class="section-title">
+        <div><p class="eyebrow">選擇規劃方式</p><h2 id="planner-heading">今天要去哪裡？</h2></div>
+      </div>
+      <div class="mode-tabs" role="tablist" aria-label="續航規劃方式">
+        <button id="routeTab" type="button" role="tab" aria-selected="true" aria-controls="routePanel">起點 → 目的地</button>
+        <button id="nearbyTab" type="button" role="tab" aria-selected="false" aria-controls="nearbyPanel">目前位置附近</button>
+      </div>
+
+      <section id="routePanel" class="mode-panel" role="tabpanel" aria-labelledby="routeTab">
+        <p class="panel-copy">輸入起點與目的地，取得路線距離，再估算抵達後的剩餘電量。</p>
+        <form id="routeForm" class="route-form">
+          <label for="origin">起點</label>
+          <input id="origin" type="text" autocomplete="street-address" placeholder="例如：台中高鐵站" required>
+          <label for="destination">目的地</label>
+          <input id="destination" type="text" autocomplete="street-address" placeholder="例如：嘉義文化路夜市" required>
+          <button class="primary" id="routeButton" type="submit">規劃這段路線 <span aria-hidden="true">→</span></button>
+        </form>
+        <div id="routeStatus" class="status" role="status" aria-live="polite">規劃時會將起點與目的地送至 Google Maps Routes 計算。</div>
+        <div id="map" class="map" aria-label="路線地圖"></div>
+        <div id="routeResult" class="route-result" hidden>
+          <div><span>路線距離</span><strong id="tripDistance">—</strong></div>
+          <div><span>預估行車時間</span><strong id="tripDuration">—</strong></div>
+          <div><span>抵達後預估電量</span><strong id="arrivalSoc">—</strong></div>
+          <div><span>抵達後基準續航</span><strong id="arrivalRange">—</strong></div>
+        </div>
+        <p class="fineprint privacy-note">路線查詢只在你按下規劃後進行。起終點會交由 Google Maps Routes 處理；電量與續航計算留在此頁。</p>
+      </section>
+
+      <section id="nearbyPanel" class="mode-panel" role="tabpanel" aria-labelledby="nearbyTab" hidden>
+        <p class="panel-copy">定位後預計比對附近道路交通資料，評估目前路況。定位只會在你按下按鈕後請求。</p>
+        <button class="secondary" id="locateButton" type="button"><span aria-hidden="true">◎</span> 使用目前位置</button>
+        <div id="locationStatus" class="status" role="status" aria-live="polite">交通部 TDX 即時路況尚待設定，尚未取得或傳送定位。</div>
+        <div class="traffic-state">
+          <div class="traffic-light" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div><strong id="trafficLabel">路況資料待連線</strong><p id="trafficDetail">接上 TDX 後，才會顯示附近道路的實際交通資料。</p></div>
+        </div>
+        <div class="base-range-note"><span>目前可先參考基準續航</span><strong id="nearbyRange">輸入電量後顯示</strong></div>
+        <p class="fineprint privacy-note">交通部資料連線尚未設定；此版本不會把定位傳出或保存。路況與續航換算模型通過校準後，才會顯示交通修正結果。</p>
+      </section>
+    </section>
+
+    <section class="notice" aria-label="估算說明">
+      <span class="notice-icon" aria-hidden="true">i</span>
+      <p>此工具不會讀取車輛即時電池資料。請依車內儀表輸入電量，並將續航結果作為行程參考。</p>
+    </section>
+    <footer><a href="/">返回營運成本試算</a><span>不收集姓名、電話、車牌或精確路線資料。</span></footer>
+  </main>
+</body>
+</html>
