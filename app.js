@@ -86,7 +86,7 @@
       map = new Map($('map'), {
         center: { lat: 23.7, lng: 120.8 }, zoom: 7,
         mapId: window.CHARGE_PLANNER_CONFIG?.googleMapsMapId || 'DEMO_MAP_ID',
-        colorScheme: google.maps.ColorScheme?.DARK,
+        colorScheme: google.maps.ColorScheme?.LIGHT,
         gestureHandling: 'cooperative', streetViewControl: false,
         mapTypeControl: false, fullscreenControl: false
       });
