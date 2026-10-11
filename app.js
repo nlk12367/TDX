@@ -5,11 +5,13 @@
   const nearbyTab = $('nearbyTab');
   const routePanel = $('routePanel');
   const nearbyPanel = $('nearbyPanel');
+  const modeTabs = document.querySelector('.mode-tabs');
   const socInput = $('socInput');
   const socSlider = $('socSlider');
   let map;
   let polylines = [];
   let mapsPromise;
+  let rangeAnimation = 0;
 
   function initializeLiff() {
     const liffId = String(window.CHARGE_PLANNER_CONFIG?.liffId || '').trim();
@@ -23,6 +25,7 @@
 
   function showMode(mode) {
     const route = mode === 'route';
+    modeTabs.dataset.mode = route ? 'route' : 'nearby';
     routeTab.setAttribute('aria-selected', String(route));
     nearbyTab.setAttribute('aria-selected', String(!route));
     routePanel.hidden = !route;
@@ -31,6 +34,12 @@
   }
   routeTab.addEventListener('click', () => showMode('route'));
   nearbyTab.addEventListener('click', () => showMode('nearby'));
+  [routeTab, nearbyTab].forEach((tab, index, tabs) => tab.addEventListener('keydown', (event) => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    const next = tabs[(index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length];
+    showMode(next === routeTab ? 'route' : 'nearby');
+  }));
 
   function estimate() {
     const soc = socInput.value === '' ? null : Number(socInput.value);
@@ -38,10 +47,35 @@
     const efficiency = Number($('efficiency').value);
     const valid = Number.isFinite(soc) && soc >= 0 && soc <= 100 && capacity > 0 && efficiency > 0;
     const km = valid ? capacity * (soc / 100) * efficiency : null;
-    const rangeText = km === null ? '輸入電量' : `${Math.round(km).toLocaleString('zh-TW')} km`;
-    $('rangeValue').textContent = rangeText;
+    const rangeNumber = $('rangeNumber');
+    const rangeUnit = $('rangeUnit');
+    window.cancelAnimationFrame(rangeAnimation);
+    if (km === null) {
+      rangeNumber.textContent = '輸入電量';
+      rangeNumber.removeAttribute('data-value');
+      rangeUnit.hidden = true;
+      $('rangeAccessible').textContent = '請輸入目前電量以估算續航';
+    } else {
+      const target = Math.round(km);
+      const start = Number(rangeNumber.dataset.value || 0);
+      const startedAt = performance.now();
+      rangeUnit.hidden = false;
+      const tick = (now) => {
+        const progress = Math.min(1, (now - startedAt) / 300);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const value = Math.round(start + (target - start) * eased);
+        rangeNumber.textContent = value.toLocaleString('zh-TW');
+        rangeNumber.dataset.value = String(value);
+        if (progress < 1) rangeAnimation = window.requestAnimationFrame(tick);
+        else $('rangeAccessible').textContent = `基準可行駛距離約 ${target.toLocaleString('zh-TW')} 公里`;
+      };
+      rangeAnimation = window.requestAnimationFrame(tick);
+    }
     $('nearbyRange').textContent = km === null ? '輸入電量後顯示' : `約 ${Math.round(km).toLocaleString('zh-TW')} km`;
-    $('batteryFill').style.width = `${Math.max(0, Math.min(100, Number.isFinite(soc) ? soc : 0))}%`;
+    const percent = Math.max(0, Math.min(100, Number.isFinite(soc) ? soc : 0));
+    $('batteryFill').style.width = `${percent}%`;
+    $('batteryFill').style.backgroundColor = percent > 50 ? '#46c879' : percent >= 20 ? '#FF9F1C' : '#E60012';
+    socSlider.style.setProperty('--progress', `${percent}%`);
     return { soc, capacity, efficiency, rangeKm: km };
   }
 
@@ -86,7 +120,7 @@
       map = new Map($('map'), {
         center: { lat: 23.7, lng: 120.8 }, zoom: 7,
         mapId: window.CHARGE_PLANNER_CONFIG?.googleMapsMapId || 'DEMO_MAP_ID',
-        colorScheme: google.maps.ColorScheme?.LIGHT,
+        colorScheme: google.maps.ColorScheme?.DARK,
         gestureHandling: 'cooperative', streetViewControl: false,
         mapTypeControl: false, fullscreenControl: false
       });
@@ -122,7 +156,7 @@
       const route = result.routes?.[0];
       if (!route) throw new Error('找不到可行駛路線，請確認地點名稱後再試。');
       polylines.forEach((line) => line.setMap(null));
-      polylines = route.createPolylines({ polylineOptions: { strokeColor: '#ff2639', strokeWeight: 5, strokeOpacity: 0.9 } });
+      polylines = route.createPolylines({ polylineOptions: { strokeColor: '#E60012', strokeWeight: 5, strokeOpacity: 0.9 } });
       polylines.forEach((line) => line.setMap(currentMap));
       if (route.viewport) currentMap.fitBounds(route.viewport, 36);
       const distanceKm = route.distanceMeters / 1000;
@@ -143,21 +177,25 @@
   });
 
   $('locateButton').addEventListener('click', () => {
-    const status = $('locationStatus');
+    const setLocationStatus = (state, message, detail) => {
+      $('locationStatus').className = `status-badge is-${state}`;
+      $('locationMessage').textContent = message;
+      $('locationDetail').textContent = detail;
+    };
     if (!navigator.geolocation) {
-      status.textContent = '此瀏覽器不支援定位；你仍可在路線模式查看基準續航。';
+      setLocationStatus('warning', '此瀏覽器不支援定位', '你仍可切換到路線模式查看基準續航。');
       return;
     }
-    status.textContent = '正在向瀏覽器要求目前位置…';
+    setLocationStatus('pending', '等待位置授權', '請在瀏覽器提示中允許存取目前位置。');
     navigator.geolocation.getCurrentPosition(
       () => {
-        status.textContent = '定位已在此頁取得；目前不會傳送或保存。TDX 路況服務尚未設定，因此暫不顯示附近車流或路況修正。';
+        setLocationStatus('pending', '位置已取得・車流待連線', '定位留在此頁；TDX 服務尚未設定，暫不顯示路況修正。');
         $('trafficLabel').textContent = '已定位・路況待連線';
         $('trafficDetail').textContent = '接入 TDX 並完成續航模型校準後，才會顯示附近路段資料與路況續航估算。';
       },
       (error) => {
-        const message = error.code === error.PERMISSION_DENIED ? '你未授權定位；可在瀏覽器設定允許後重試。' : '目前無法取得位置，請確認裝置定位功能後重試。';
-        status.textContent = message;
+        const denied = error.code === error.PERMISSION_DENIED;
+        setLocationStatus('warning', denied ? '尚未允許定位' : '目前無法取得位置', denied ? '可在瀏覽器網站權限中允許定位，再按一次重試。' : '請確認裝置定位已開啟，再按一次重試。');
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
     );
