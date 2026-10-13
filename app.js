@@ -1,6 +1,7 @@
 (() => {
   'use strict';
   const $ = (id) => document.getElementById(id);
+  const MAX_BASELINE_RANGE_KM = 480;
   const routeTab = $('routeTab');
   const nearbyTab = $('nearbyTab');
   const routePanel = $('routePanel');
@@ -46,7 +47,7 @@
     const capacity = Number($('capacity').value);
     const efficiency = Number($('efficiency').value);
     const valid = Number.isFinite(soc) && soc >= 0 && soc <= 100 && capacity > 0 && efficiency > 0;
-    const km = valid ? capacity * (soc / 100) * efficiency : null;
+    const km = valid ? Math.min(capacity * (soc / 100) * efficiency, MAX_BASELINE_RANGE_KM) : null;
     const rangeNumber = $('rangeNumber');
     const rangeUnit = $('rangeUnit');
     window.cancelAnimationFrame(rangeAnimation);
@@ -132,7 +133,7 @@
     event.preventDefault();
     const origin = $('origin').value.trim();
     const destination = $('destination').value.trim();
-    const { soc, capacity, efficiency } = estimate();
+    const { soc, capacity, efficiency, rangeKm } = estimate();
     if (soc === null || soc < 0 || soc > 100) {
       $('socInput').focus();
       return setStatus('請先輸入 0–100% 的目前電量，再規劃路線。', true);
@@ -161,7 +162,7 @@
       if (route.viewport) currentMap.fitBounds(route.viewport, 36);
       const distanceKm = route.distanceMeters / 1000;
       const arrivalSoc = Math.max(0, soc - (distanceKm / efficiency / capacity) * 100);
-      const arrivalRange = capacity * (arrivalSoc / 100) * efficiency;
+      const arrivalRange = Math.min(capacity * (arrivalSoc / 100) * efficiency, MAX_BASELINE_RANGE_KM, rangeKm);
       $('tripDistance').textContent = `${distanceKm.toFixed(1)} km`;
       $('tripDuration').textContent = `${Math.round(route.durationMillis / 60000)} 分鐘`;
       $('arrivalSoc').textContent = `${arrivalSoc.toFixed(0)}%`;
